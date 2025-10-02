@@ -7,7 +7,7 @@ bp = Blueprint("feedback", __name__)
 # 🔹 Configuración desde variables de entorno
 MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
 MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN")
-MAILGUN_FROM = os.getenv("MAILGUN_FROM", f"feedback@{MAILGUN_DOMAIN}")
+MAILGUN_FROM = os.getenv("MAILGUN_FROM", f"postmaster@{MAILGUN_DOMAIN}")  # 👈 CORREGIDO
 MAILGUN_DEST = os.getenv("MAILGUN_DEST")
 
 @bp.route("/feedback", methods=["POST"])
