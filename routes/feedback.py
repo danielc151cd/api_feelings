@@ -1,30 +1,22 @@
 from flask import Blueprint, request, jsonify
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import os
-import traceback  # 👈 para logs detallados
+import requests
 
 bp = Blueprint("feedback", __name__)
 
-# 🔹 Configuración de correo desde variables de entorno
-EMAIL_USER = os.getenv("EMAIL_USER")   # tu correo Gmail
-EMAIL_PASS = os.getenv("EMAIL_PASS")   # contraseña de aplicación de Gmail
-EMAIL_DEST = os.getenv("EMAIL_DEST")   # destino del feedback
+# 🔹 Configuración desde variables de entorno
+MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
+MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN")
+MAILGUN_FROM = os.getenv("MAILGUN_FROM", f"feedback@{MAILGUN_DOMAIN}")
+MAILGUN_DEST = os.getenv("MAILGUN_DEST")
 
 @bp.route("/feedback", methods=["POST"])
 def feedback():
     try:
-        data = request.get_json(force=True)  # 👈 fuerza a leer JSON
+        data = request.get_json(force=True)
         nombre = data.get("nombre", "Anónimo")
         email = data.get("email", "No proporcionado")
         mensaje = data.get("mensaje", "")
-
-        # Crear mensaje con soporte UTF-8
-        msg = MIMEMultipart()
-        msg["From"] = EMAIL_USER
-        msg["To"] = EMAIL_DEST
-        msg["Subject"] = f"📩 Nuevo Feedback de {nombre}"
 
         cuerpo = f"""
         Has recibido un nuevo comentario desde la app:
@@ -36,18 +28,26 @@ def feedback():
         {mensaje}
         """
 
-        msg.attach(MIMEText(cuerpo, "plain", "utf-8"))
+        # 🔹 Envío con Mailgun API
+        response = requests.post(
+            f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages",
+            auth=("api", MAILGUN_API_KEY),
+            data={
+                "from": MAILGUN_FROM,
+                "to": [MAILGUN_DEST],
+                "subject": f"📩 Nuevo Feedback de {nombre}",
+                "text": cuerpo
+            }
+        )
 
-        # Enviar por SMTP (Gmail)
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)  # 👈 timeout para debug
-        server.starttls()
-        server.login(EMAIL_USER, EMAIL_PASS)
-        server.sendmail(EMAIL_USER, EMAIL_DEST, msg.as_string())
-        server.quit()
-
-        return jsonify({"msg": "✅ Opinión enviada correctamente"}), 200
+        if response.status_code == 200:
+            return jsonify({"msg": "✅ Opinión enviada correctamente"}), 200
+        else:
+            return jsonify({
+                "msg": "⚠️ Error enviando la opinión",
+                "details": response.text
+            }), 500
 
     except Exception as e:
-        error_str = traceback.format_exc()  # 👈 traza completa
-        print("❌ Error enviando correo:\n", error_str)  # 👈 log a Railway
+        print("❌ Error enviando correo:", e)
         return jsonify({"msg": f"⚠️ Error enviando la opinión: {str(e)}"}), 500
