@@ -1,7 +1,3 @@
-import requests
-
-BASE_URL = "http://127.0.0.1:5000/api"
-
 def test_login():
     url = f"{BASE_URL}/login"
     payload = {
@@ -9,8 +5,11 @@ def test_login():
         "password": "1234"
     }
     response = requests.post(url, json=payload)
+
+    # Imprimimos la respuesta tal cual venga
     print("📌 Login status:", response.status_code)
-    print("📌 Login raw text:", response.text)  # 👈 Para ver la respuesta real
+    print("📌 Login raw text:", response.text)  # 👈 aquí veremos si es HTML, JSON o vacío
+
     try:
         print("📌 Login JSON:", response.json())
     except Exception as e:
