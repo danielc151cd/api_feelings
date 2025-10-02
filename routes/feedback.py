@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os  # 👈 para leer variables de entorno
+import os
+import traceback  # 👈 para logs detallados
 
 bp = Blueprint("feedback", __name__)
 
@@ -38,7 +39,7 @@ def feedback():
         msg.attach(MIMEText(cuerpo, "plain", "utf-8"))
 
         # Enviar por SMTP (Gmail)
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)  # 👈 timeout para debug
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASS)
         server.sendmail(EMAIL_USER, EMAIL_DEST, msg.as_string())
@@ -47,5 +48,6 @@ def feedback():
         return jsonify({"msg": "✅ Opinión enviada correctamente"}), 200
 
     except Exception as e:
-        print("❌ Error enviando correo:", e)
+        error_str = traceback.format_exc()  # 👈 traza completa
+        print("❌ Error enviando correo:\n", error_str)  # 👈 log a Railway
         return jsonify({"msg": f"⚠️ Error enviando la opinión: {str(e)}"}), 500
