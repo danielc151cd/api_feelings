@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 import os
 from routes import auth, sentimientos, feedback # 👈 añade feedback
+from routes import auth, sentimientos, feedback, debug
 
 
 app = Flask(__name__)
@@ -30,7 +31,7 @@ from routes import auth, sentimientos
 app.register_blueprint(auth.bp, url_prefix="/api")
 app.register_blueprint(sentimientos.bp, url_prefix="/api/sentimientos")
 app.register_blueprint(feedback.bp, url_prefix="/api")  # 👈 ahora feedback
-
+app.register_blueprint(debug.bp, url_prefix="/api")
 
 # (opcional) imprime rutas para verificar
 print("🔎 Rutas registradas:")
