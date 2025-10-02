@@ -2,18 +2,19 @@ from flask import Blueprint, request, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import os  # 👈 para leer variables de entorno
 
 bp = Blueprint("feedback", __name__)
 
-# 🔹 Configuración de correo (ajusta con tus datos reales)
-EMAIL_USER = "danisancarta@gmail.com"
-EMAIL_PASS = "djeh elxz cupc jlrf"  # 👈 contraseña de aplicación de Gmail
-EMAIL_DEST = "salasxd1.1.1.2@gmail.com"
+# 🔹 Configuración de correo desde variables de entorno
+EMAIL_USER = os.getenv("EMAIL_USER")   # tu correo Gmail
+EMAIL_PASS = os.getenv("EMAIL_PASS")   # contraseña de aplicación de Gmail
+EMAIL_DEST = os.getenv("EMAIL_DEST")   # destino del feedback
 
 @bp.route("/feedback", methods=["POST"])
 def feedback():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)  # 👈 fuerza a leer JSON
         nombre = data.get("nombre", "Anónimo")
         email = data.get("email", "No proporcionado")
         mensaje = data.get("mensaje", "")
@@ -34,7 +35,6 @@ def feedback():
         {mensaje}
         """
 
-        # 👇 Aquí se fuerza UTF-8
         msg.attach(MIMEText(cuerpo, "plain", "utf-8"))
 
         # Enviar por SMTP (Gmail)
